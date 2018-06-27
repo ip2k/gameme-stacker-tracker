@@ -1,7 +1,4 @@
-//var apiBase = 'https://cors-anywhere.herokuapp.com/'
 window.apiBase = 'http://127.0.0.1:8080/'
-
-
 
 function getXML(url) {
   return new Promise(function (resolve, reject) {
@@ -333,94 +330,109 @@ async function main() {
     ]
   })
 
-  Highcharts.chart('container', {
-    chart: {
-      zoomType: 'xy'
-    },
-    title: {
-      text: 'Current Round & Historic Team Metrics'
-    },
-    xAxis: [{
-      categories: ['Kills & KPD', 'Deaths', 'Historic Win %', 'Kill:Death', 'Historic K:D'],
+  
+Highcharts.chart('redperplayer', {
+  chart: {
+      type: 'column'
+  },
+  title: {
+      text: 'RED Players'
+  },
+  xAxis: {
+      categories: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.name}),
       crosshair: true
-    }],
-    yAxis: [{ // Primary yAxis
-      labels: {
-        format: '{value}',
-        style: {
-          color: 'rgba(33, 33, 33, 1)'
-        }
-      },
+  },
+  yAxis: {
+      min: 0,
+      minorTicks: false,
       title: {
-        text: 'Kills / Deaths',
-        style: {
-          color: 'rgba(33, 33, 33, 1)'
-        }
+          text: ''
       }
-    }, { // Secondary yAxis
-      labels: {
-        format: '{value}%',
-        style: {
-          color: 'rgba(224, 224, 224, 1)'
-        }
-      },
-      title: {
-        text: 'Ratios',
-        style: {
-          color: 'rgba(224, 224, 224, 1)'
-        }
-      },
-      opposite: true
-    }],
-    legend: {
-      shadow: false,
-    },
-    tooltip: {
-      shared: true
-    },
-    plotOptions: {
+  },
+  tooltip: {
+      headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+      pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+          '<td style="padding:0"><b>{point.y}</b></td></tr>',
+      footerFormat: '</table>',
+      shared: true,
+      useHTML: true,
+      valueDecimals: 3
+  },
+  plotOptions: {
       column: {
-        //  grouping: false,
-        //  shadow: false,
-        //  borderWidth: 0
+          pointPadding: 0.05,
+          borderWidth: 0
       }
-    },
-    series: [{
-        name: 'RED Ratios',
-        type: 'column',
-        color: 'rgba(239, 154, 154, .9)',
-        yAxis: 1,
-        data: [redStats.wl, redStats.kd, redStats.historickdpct],
-        tooltip: {
-          valueSuffix: '%'
-        }
-      }, {
-        name: 'BLU Ratios',
-        type: 'column',
-        color: 'rgba(144, 202, 249, .9)',
-        yAxis: 1,
-        data: [blueStats.wl, blueStats.kd, blueStats.historickdpct],
-        tooltip: {
-          valueSuffix: '%'
-        }
-      },
-      {
-        name: 'RED Kills or Deaths',
-        type: 'column',
-        color: 'rgba(244, 67, 54, .9)',
-        data: [redStats.kills, redStats.deaths],
-      }, {
-        name: 'BLU Kills or Deaths',
-        type: 'column',
-        color: 'rgba(33, 150, 243, .9)',
-        data: [blueStats.kills, blueStats.deaths],
+  },
+  series: [{
+      name: 'Kills per Death',
+      color: 'rgba(244, 67, 54, 1)',
+      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.kd})
+  }, {
+      name: 'Historic KPD',
+      color: 'rgba(240, 98, 146, 1)',
+      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.historickd})
+
+  }, {
+      name: 'Wins per Loss',
+      color: 'rgba(142, 36, 170, 1)',
+      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.wl})
+  }]
+})
+
+Highcharts.chart('bluperplayer', {
+  chart: {
+      type: 'column'
+  },
+  title: {
+      text: 'BLU Players'
+  },
+  xAxis: {
+      categories: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.name}),
+      crosshair: true
+  },
+  yAxis: {
+      min: 0,
+      minorTicks: false,
+      title: {
+          text: ''
       }
-    ]
-  });
+  },
+  tooltip: {
+      headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
+      pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
+          '<td style="padding:0"><b>{point.y}</b></td></tr>',
+      footerFormat: '</table>',
+      shared: true,
+      useHTML: true,
+      valueDecimals: 3
+  },
+  plotOptions: {
+      column: {
+          pointPadding: 0.05,
+          borderWidth: 0
+      }
+  },
+  series: [{
+      name: 'Kills per Death',
+      color: '#03a9f4',
+      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.kd})
+  }, {
+      name: 'Historic KPD',
+      color: '#00bcd4',
+      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.historickd})
+
+  }, {
+      name: 'Wins per Loss',
+      color: '#009688',
+      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.wl})
+  }]
+})
 
 
 
-
+  $('#redperplayer').show()
+  $('#bluperplayer').show()
   $('#container').show()
   $('#Red').show()
   $('#Blue').show()
