@@ -3,7 +3,6 @@ window.apiBase = 'http://127.0.0.1:8080/'
 
 
 
-
 function getXML(url) {
   return new Promise(function (resolve, reject) {
     var xhr = new XMLHttpRequest();
@@ -32,7 +31,7 @@ async function getServerAddress() {
   if (window.location.hash) {
     return window.location.hash.replace('#', '')
   } else {
-    return '66.151.138.182:27015' // default to Hyperion when no URL fragment specifies a server
+    return '' 
   }
 }
 
@@ -117,9 +116,15 @@ async function getPlayer(clientAPIBaseURL, inputPlayer) {
 
 
 /* MAIN */
-var main = async function () {
-  const done = await contentLoaded
-  console.log('loaded')
+async function main() {
+//  const done = await contentLoaded
+  if (window.location.hash.replace('#', '') === '') {  // empty hash shows or no hash shows how to use this
+    $('#error').show()
+    return
+  } else {
+    $('#error').hide()
+  }
+  console.log('main()')
   const server = await getServerAddress()
 
   const serverDoc = await getXML(`${apiBase}http://api.gameme.net/serverinfo/${server}/players`)
@@ -190,101 +195,245 @@ var main = async function () {
       })
     }
   })
-  // calculate per-team KD
-  // calculate per-team win/loss (average W/L)
-  // $('#stats > tbody:last-child').append('<tr>...</tr><tr>...</tr>');
-  // calc stats
+
   redStats = {
     kills: 0,
     deaths: 0,
+    historickd: 0,
+    historickdpct: 0,
     wins: 0,
     losses: 0
   }
   blueStats = {
     kills: 0,
     deaths: 0,
+    historickd: 0,
+    historickdpct: 0,
     wins: 0,
     losses: 0
   }
-  reds = window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}) // only conisder players with a historical record
-  blues = window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"})
+  // only conisder players with a historical record (where historickd > 0)
+  reds = window.players.filter(p => {
+    return p.historickd > 0
+  }).filter(p => {
+    return p.team === "Red"
+  }) 
+  blues = window.players.filter(p => {
+    return p.historickd > 0
+  }).filter(p => {
+    return p.team === "Blue"
+  })
   reds.map(p => {
     redStats.kills += Number(p.kills),
-    redStats.deaths += Number(p.deaths),
-    redStats.wins += Number(p.wins),
-    redStats.losses += Number(p.losses)
+      redStats.deaths += Number(p.deaths),
+      redStats.historickd += Number(p.historickd),
+      redStats.wins += Number(p.wins),
+      redStats.losses += Number(p.losses)
   })
-  redStats.wl = Number((redStats.wins / redStats.losses).toFixed(4))
-  redStats.kd = Number((redStats.kills / redStats.deaths).toFixed(4))
+  redStats.wl = Number(((redStats.wins / redStats.losses) * 100).toFixed(2))
+  redStats.kd = Number(((redStats.kills / redStats.deaths) * 100).toFixed(2))
+  redStats.historickdpct = Number(((redStats.historickd / Object.values(redStats).length) * 100).toFixed(2))
 
   blues.map(p => {
     blueStats.kills += Number(p.kills),
-    blueStats.deaths += Number(p.deaths),
-    blueStats.wins += Number(p.wins),
-    blueStats.losses += Number(p.losses)
+      blueStats.deaths += Number(p.deaths),
+      blueStats.historickd += Number(p.historickd),
+      blueStats.wins += Number(p.wins),
+      blueStats.losses += Number(p.losses)
   })
-  blueStats.wl = Number((blueStats.wins / blueStats.losses).toFixed(4))
-  blueStats.kd = Number((blueStats.kills / blueStats.deaths).toFixed(4))
+  blueStats.wl = Number(((blueStats.wins / blueStats.losses) * 100).toFixed(2))
+  blueStats.kd = Number(((blueStats.kills / blueStats.deaths) * 100).toFixed(2))
+  blueStats.historickdpct = Number(((blueStats.historickd / Object.values(blueStats).length) * 100).toFixed(2))
+
+
+
   console.log(redStats, blueStats)
-
-
-
+  Highcharts.chart('container', {
+    chart: {
+      zoomType: 'xy'
+    },
+    title: {
+      text: 'Current Round & Historic Team Metrics'
+    },
+    xAxis: [{
+      categories: ['Kills & KPD', 'Deaths', 'Historic Win %', 'Kill:Death', 'Historic K:D'],
+      crosshair: true
+    }],
+    yAxis: [{ // Primary yAxis
+      labels: {
+        format: '{value}',
+        style: {
+          color: 'rgba(33, 33, 33, 1)'
+        }
+      },
+      title: {
+        text: 'Kills / Deaths',
+        style: {
+          color: 'rgba(33, 33, 33, 1)'
+        }
+      }
+    }, { // Secondary yAxis
+      labels: {
+        format: '{value}%',
+        style: {
+          color: 'rgba(224, 224, 224, 1)'
+        }
+      },
+      title: {
+        text: 'Ratios',
+        style: {
+          color: 'rgba(224, 224, 224, 1)'
+        }
+      },
+      opposite: true
+    }],
+    legend: {
+      shadow: false,
+    },
+    tooltip: {
+      shared: true
+    },
+    plotOptions: {
+      column: {
+        //  grouping: false,
+        //  shadow: false,
+        //  borderWidth: 0
+      }
+    },
+    series: [{
+        name: 'RED Ratios',
+        type: 'column',
+        color: 'rgba(239, 154, 154, .9)',
+        yAxis: 1,
+        data: [redStats.wl, redStats.kd, redStats.historickdpct],
+        tooltip: {
+          valueSuffix: '%'
+        }
+      }, {
+        name: 'BLU Ratios',
+        type: 'column',
+        color: 'rgba(144, 202, 249, .9)',
+        yAxis: 1,
+        data: [blueStats.wl, blueStats.kd, blueStats.historickdpct],
+        tooltip: {
+          valueSuffix: '%'
+        }
+      },
+      {
+        name: 'RED Kills or Deaths',
+        type: 'column',
+        color: 'rgba(244, 67, 54, .9)',
+        data: [redStats.kills, redStats.deaths],
+      }, {
+        name: 'BLU Kills or Deaths',
+        type: 'column',
+        color: 'rgba(33, 150, 243, .9)',
+        data: [blueStats.kills, blueStats.deaths],
+      }
+    ]
+  })
 
   Highcharts.chart('container', {
     chart: {
-        type: 'column'
+      zoomType: 'xy'
     },
     title: {
-        text: 'Efficiency Optimization by Branch'
+      text: 'Current Round & Historic Team Metrics'
     },
-    xAxis: {
-        categories: Object.keys(redStats)
-    },
-    yAxis: [{
-        min: 0,
-        title: {
-            text: 'K:D'
+    xAxis: [{
+      categories: ['Kills & KPD', 'Deaths', 'Historic Win %', 'Kill:Death', 'Historic K:D'],
+      crosshair: true
+    }],
+    yAxis: [{ // Primary yAxis
+      labels: {
+        format: '{value}',
+        style: {
+          color: 'rgba(33, 33, 33, 1)'
         }
-    }, {
-        title: {
-            text: 'W:L'
-        },
-        opposite: true
+      },
+      title: {
+        text: 'Kills / Deaths',
+        style: {
+          color: 'rgba(33, 33, 33, 1)'
+        }
+      }
+    }, { // Secondary yAxis
+      labels: {
+        format: '{value}%',
+        style: {
+          color: 'rgba(224, 224, 224, 1)'
+        }
+      },
+      title: {
+        text: 'Ratios',
+        style: {
+          color: 'rgba(224, 224, 224, 1)'
+        }
+      },
+      opposite: true
     }],
     legend: {
-        shadow: false,
+      shadow: false,
     },
     tooltip: {
-        shared: true
+      shared: true
     },
     plotOptions: {
-        column: {
-            grouping: false,
-            shadow: false,
-            borderWidth: 0
-        }
+      column: {
+        //  grouping: false,
+        //  shadow: false,
+        //  borderWidth: 0
+      }
     },
     series: [{
-        name: 'RED',
+        name: 'RED Ratios',
+        type: 'column',
+        color: 'rgba(239, 154, 154, .9)',
+        yAxis: 1,
+        data: [redStats.wl, redStats.kd, redStats.historickdpct],
+        tooltip: {
+          valueSuffix: '%'
+        }
+      }, {
+        name: 'BLU Ratios',
+        type: 'column',
+        color: 'rgba(144, 202, 249, .9)',
+        yAxis: 1,
+        data: [blueStats.wl, blueStats.kd, blueStats.historickdpct],
+        tooltip: {
+          valueSuffix: '%'
+        }
+      },
+      {
+        name: 'RED Kills or Deaths',
+        type: 'column',
         color: 'rgba(244, 67, 54, .9)',
-        data: Object.values(redStats),
-        pointPadding: 0.3,
-        pointPlacement: -0.2
-    }, {
-        name: 'BLU',
+        data: [redStats.kills, redStats.deaths],
+      }, {
+        name: 'BLU Kills or Deaths',
+        type: 'column',
         color: 'rgba(33, 150, 243, .9)',
-        data: Object.values(blueStats),
-        pointPadding: 0.4,
-        pointPlacement: -0.2
-    }]
-});
+        data: [blueStats.kills, blueStats.deaths],
+      }
+    ]
+  });
 
 
-  $('#stats').show()
+
+
+  $('#container').show()
   $('#Red').show()
   $('#Blue').show()
   $('#status').hide()
-}()
+}
+
+$(window).on('hashchange', function () {
+  main()
+})
+
+$( document ).ready(function() {
+  main()
+})
 
 
 /* NOTES */
