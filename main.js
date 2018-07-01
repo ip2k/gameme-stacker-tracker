@@ -227,6 +227,12 @@ async function main() {
       redStats.wins += Number(p.wins),
       redStats.losses += Number(p.losses)
   })
+ // 8 / 2 == 80% win rate
+ // total games = wins + losses 
+ // win pct = games won / total games
+  //80% win rate
+  redStats.totalRounds = Number(redStats.wins + redStats.losses)
+  redStats.winPct = Number(((redStats.wins / redStats.totalRounds) * 100).toFixed(2))
   redStats.wl = Number(((redStats.wins / redStats.losses) * 100).toFixed(2))
   redStats.kd = Number(((redStats.kills / redStats.deaths) * 100).toFixed(2))
   redStats.historickdpct = Number(((redStats.historickd / Object.values(redStats).length) * 100).toFixed(2))
@@ -238,6 +244,8 @@ async function main() {
       blueStats.wins += Number(p.wins),
       blueStats.losses += Number(p.losses)
   })
+  blueStats.totalRounds = Number(blueStats.wins + blueStats.losses)
+  blueStats.winPct = Number(((blueStats.wins / blueStats.totalRounds) * 100).toFixed(2))
   blueStats.wl = Number(((blueStats.wins / blueStats.losses) * 100).toFixed(2))
   blueStats.kd = Number(((blueStats.kills / blueStats.deaths) * 100).toFixed(2))
   blueStats.historickdpct = Number(((blueStats.historickd / Object.values(blueStats).length) * 100).toFixed(2))
@@ -250,10 +258,10 @@ async function main() {
       zoomType: 'xy'
     },
     title: {
-      text: 'Current Round & Historic Team Metrics'
+      text: 'Team Summary'
     },
     xAxis: [{
-      categories: ['Kills & KPD', 'Deaths', 'Historic Win %', 'Kill:Death', 'Historic K:D'],
+      categories: ['Current KPD', 'Historic KPD', 'Historic Win %'],
       crosshair: true
     }],
     yAxis: [{ // Primary yAxis
@@ -264,7 +272,7 @@ async function main() {
         }
       },
       title: {
-        text: 'Kills / Deaths',
+        text: 'KPD',
         style: {
           color: 'rgba(33, 33, 33, 1)'
         }
@@ -277,7 +285,7 @@ async function main() {
         }
       },
       title: {
-        text: 'Ratios',
+        text: 'Historic Win %',
         style: {
           color: 'rgba(224, 224, 224, 1)'
         }
@@ -298,34 +306,23 @@ async function main() {
       }
     },
     series: [{
-        name: 'RED Ratios',
+        name: 'RED',
         type: 'column',
         color: 'rgba(239, 154, 154, .9)',
         yAxis: 1,
-        data: [redStats.wl, redStats.kd, redStats.historickdpct],
+        data: [redStats.kd, redStats.historickdpct, redStats.winPct],
         tooltip: {
           valueSuffix: '%'
         }
       }, {
-        name: 'BLU Ratios',
+        name: 'BLU',
         type: 'column',
         color: 'rgba(144, 202, 249, .9)',
         yAxis: 1,
-        data: [blueStats.wl, blueStats.kd, blueStats.historickdpct],
+        data: [blueStats.kd, blueStats.historickdpct, blueStats.winPct],
         tooltip: {
           valueSuffix: '%'
         }
-      },
-      {
-        name: 'RED Kills or Deaths',
-        type: 'column',
-        color: 'rgba(244, 67, 54, .9)',
-        data: [redStats.kills, redStats.deaths],
-      }, {
-        name: 'BLU Kills or Deaths',
-        type: 'column',
-        color: 'rgba(33, 150, 243, .9)',
-        data: [blueStats.kills, blueStats.deaths],
       }
     ]
   })
