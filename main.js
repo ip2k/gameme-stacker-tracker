@@ -285,7 +285,7 @@ async function main() {
         }
       },
       title: {
-        text: 'Historic Win %',
+        text: 'Win %',
         style: {
           color: 'rgba(224, 224, 224, 1)'
         }
@@ -306,20 +306,29 @@ async function main() {
       }
     },
     series: [{
-        name: 'RED',
+      name: 'Current KPD',
+      type: 'column',
+      color: 'rgba(239, 154, 154, .9)',
+      yAxis: 1,
+      data: [redStats.kd, blueStats.kd],
+      tooltip: {
+        valueSuffix: ' KPD'
+      }
+    },{
+        name: 'Historic KPD',
         type: 'column',
         color: 'rgba(239, 154, 154, .9)',
         yAxis: 1,
-        data: [redStats.kd, redStats.historickdpct, redStats.winPct],
+        data: [redStats.historickdpct, blueStats.historickdpct],
         tooltip: {
-          valueSuffix: '%'
+          valueSuffix: ' KPD'
         }
       }, {
-        name: 'BLU',
+        name: 'Historic Win %',
         type: 'column',
         color: 'rgba(144, 202, 249, .9)',
         yAxis: 1,
-        data: [blueStats.kd, blueStats.historickdpct, blueStats.winPct],
+        data: [redStats.winPct, blueStats.winPct],
         tooltip: {
           valueSuffix: '%'
         }
