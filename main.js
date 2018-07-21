@@ -1,4 +1,5 @@
-window.apiBase = 'http://127.0.0.1:8080/'
+//window.apiBase = 'http://127.0.0.1:8080/'
+window.apiBase = 'https://cors-anywhere.herokuapp.com/'
 
 function getXML(url) {
   return new Promise(function (resolve, reject) {
@@ -234,8 +235,8 @@ async function main() {
   redStats.totalRounds = Number(redStats.wins + redStats.losses)
   redStats.winPct = Number(((redStats.wins / redStats.totalRounds) * 100).toFixed(2))
   redStats.wl = Number(((redStats.wins / redStats.losses) * 100).toFixed(2))
-  redStats.kd = Number(((redStats.kills / redStats.deaths) * 100).toFixed(2))
-  redStats.historickdpct = Number(((redStats.historickd / Object.values(redStats).length) * 100).toFixed(2))
+  redStats.kd = Number((redStats.kills / redStats.deaths).toFixed(2))
+  redStats.historickdpct = Number((redStats.historickd / Object.values(redStats).length).toFixed(2))
 
   blues.map(p => {
     blueStats.kills += Number(p.kills),
@@ -247,8 +248,8 @@ async function main() {
   blueStats.totalRounds = Number(blueStats.wins + blueStats.losses)
   blueStats.winPct = Number(((blueStats.wins / blueStats.totalRounds) * 100).toFixed(2))
   blueStats.wl = Number(((blueStats.wins / blueStats.losses) * 100).toFixed(2))
-  blueStats.kd = Number(((blueStats.kills / blueStats.deaths) * 100).toFixed(2))
-  blueStats.historickdpct = Number(((blueStats.historickd / Object.values(blueStats).length) * 100).toFixed(2))
+  blueStats.kd = Number((blueStats.kills / blueStats.deaths).toFixed(2))
+  blueStats.historickdpct = Number((blueStats.historickd / Object.values(blueStats).length).toFixed(2))
 
 
 
@@ -261,34 +262,22 @@ async function main() {
       text: 'Team Summary'
     },
     xAxis: [{
-      categories: ['Current KPD', 'Historic KPD', 'Historic Win %'],
+      categories: ['RED', 'BLU'],
       crosshair: true
     }],
     yAxis: [{ // Primary yAxis
       labels: {
         format: '{value}',
-        style: {
-          color: 'rgba(33, 33, 33, 1)'
-        }
       },
       title: {
         text: 'KPD',
-        style: {
-          color: 'rgba(33, 33, 33, 1)'
-        }
       }
     }, { // Secondary yAxis
       labels: {
         format: '{value}%',
-        style: {
-          color: 'rgba(224, 224, 224, 1)'
-        }
       },
       title: {
         text: 'Win %',
-        style: {
-          color: 'rgba(224, 224, 224, 1)'
-        }
       },
       opposite: true
     }],
@@ -300,7 +289,7 @@ async function main() {
     },
     plotOptions: {
       column: {
-        //  grouping: false,
+        //grouping: true,
         //  shadow: false,
         //  borderWidth: 0
       }
@@ -308,8 +297,8 @@ async function main() {
     series: [{
       name: 'Current KPD',
       type: 'column',
-      color: 'rgba(239, 154, 154, .9)',
-      yAxis: 1,
+      color: '#4caf50',
+      yAxis: 0,
       data: [redStats.kd, blueStats.kd],
       tooltip: {
         valueSuffix: ' KPD'
@@ -317,8 +306,8 @@ async function main() {
     },{
         name: 'Historic KPD',
         type: 'column',
-        color: 'rgba(239, 154, 154, .9)',
-        yAxis: 1,
+        color: '#a5d6a7',
+        yAxis: 0,
         data: [redStats.historickdpct, blueStats.historickdpct],
         tooltip: {
           valueSuffix: ' KPD'
@@ -326,7 +315,7 @@ async function main() {
       }, {
         name: 'Historic Win %',
         type: 'column',
-        color: 'rgba(144, 202, 249, .9)',
+        color: '#fdd835',
         yAxis: 1,
         data: [redStats.winPct, blueStats.winPct],
         tooltip: {
