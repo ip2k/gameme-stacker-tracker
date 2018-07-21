@@ -262,7 +262,7 @@ async function main() {
       text: 'Team Summary'
     },
     xAxis: [{
-      categories: ['RED', 'BLU'],
+      categories: ['Current KPD', 'Historic KPD', 'Historic Win %'],
       crosshair: true
     }],
     yAxis: [{ // Primary yAxis
@@ -295,31 +295,22 @@ async function main() {
       }
     },
     series: [{
-      name: 'Current KPD',
+      name: 'RED',
       type: 'column',
-      color: '#4caf50',
+      color: '#f44336',
       yAxis: 0,
-      data: [redStats.kd, blueStats.kd],
+      data: [redStats.kd, redStats.historickdpct, redStats.winPct],
       tooltip: {
-        valueSuffix: ' KPD'
+        valueSuffix: ' '
       }
     },{
-        name: 'Historic KPD',
+        name: 'BLU',
         type: 'column',
-        color: '#a5d6a7',
+        color: '#2196f3',
         yAxis: 0,
-        data: [redStats.historickdpct, blueStats.historickdpct],
+        data: [blueStats.kd, blueStats.historickdpct, blueStats.winPct],
         tooltip: {
-          valueSuffix: ' KPD'
-        }
-      }, {
-        name: 'Historic Win %',
-        type: 'column',
-        color: '#fdd835',
-        yAxis: 1,
-        data: [redStats.winPct, blueStats.winPct],
-        tooltip: {
-          valueSuffix: '%'
+          valueSuffix: ' '
         }
       }
     ]
