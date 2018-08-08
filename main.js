@@ -29,7 +29,7 @@ async function getServerAddress() {
   if (window.location.hash) {
     return window.location.hash.replace('#', '')
   } else {
-    return '' 
+    return ''
   }
 }
 
@@ -102,10 +102,20 @@ async function getPlayer(clientAPIBaseURL, inputPlayer) {
     var player = await _parsePlayer(playerDoc, inputPlayer)
     //          if (typeof(player.link) === 'undefined') { player.link = player.name }
     await store.set(cacheKey, player, Date.now() + 259200000)
+    //let thisPlayer = Object.assign(player, inputPlayer)
+    //window.players.push(thisPlayer)
+    //return true
+    window.currentPlayer++
+    $('#status').text(`Loading ${window.currentPlayer} of ${window.totalPlayers} players, please wait...`)
     return Object.assign(player, inputPlayer)
     // get player, parse, timestamp, store, return
   } else {
     console.log(`Cache hit on ${cacheKey}`)
+    //let thisPlayer = Object.assign(cached, inputPlayer)
+    //window.players.push(thisPlayer)
+    //return true
+    window.currentPlayer++
+    $('#status').text(`Loading ${window.currentPlayer} of ${window.totalPlayers} players, please wait...`)
     return Object.assign(cached, inputPlayer)
     // check timestamp, if bad timestamp, do same as above
     // if (cached.time < (Date.now() - 259200000)) { // 3 days in ms }
@@ -115,8 +125,8 @@ async function getPlayer(clientAPIBaseURL, inputPlayer) {
 
 /* MAIN */
 async function main() {
-//  const done = await contentLoaded
-  if (window.location.hash.replace('#', '') === '') {  // empty hash shows or no hash shows how to use this
+  //  const done = await contentLoaded
+  if (window.location.hash.replace('#', '') === '') { // empty hash shows or no hash shows how to use this
     $('#error').show()
     return
   } else {
@@ -131,9 +141,10 @@ async function main() {
   const mapName = serverDoc.getElementsByTagName("map")[0].firstChild.data
   const playersRaw = serverDoc.getElementsByTagName("player")
   window.players = []
-
+  window.playersToGet = [] // set up arr for promises that we need to resolve in parallel
+  window.totalPlayers = playersRaw.length
+  window.currentPlayer = 1
   for (var i = 0; i < playersRaw.length; i++) {
-    $('#status').text(`Loading ${i+1} of ${playersRaw.length} players, please wait...`)
     var playerRaw = playersRaw[i]
     var name = playerRaw.getElementsByTagName('name')[0].firstChild.data
     var team = playerRaw.getElementsByTagName('team')[0].firstChild.data
@@ -147,18 +158,24 @@ async function main() {
       var kd = 0
     }
 
-    var player = await getPlayer(clientAPIBaseURL, {
-      name: name,
-      team: team,
-      id: id,
-      kills: Number(kills),
-      deaths: Number(deaths),
-      kd: Number(kd)
-    })
-    console.log(player)
-    window.players.push(player)
+    window.playersToGet.push(  // we'll get all of these later so we don't have to wait for each one serially
+      getPlayer(clientAPIBaseURL, 
+        {
+         name: name,
+         team: team,
+         id: id,
+         kills: Number(kills),
+         deaths: Number(deaths),
+         kd: Number(kd)
+        }
+      )
+    )
+    //console.log(player)
+    //window.players.push(player)
     //await addRow(player)
   }
+
+  window.players = await Promise.all(window.playersToGet)
 
   console.log(players)
 
@@ -215,7 +232,7 @@ async function main() {
     return p.historickd > 0
   }).filter(p => {
     return p.team === "Red"
-  }) 
+  })
   blues = window.players.filter(p => {
     return p.historickd > 0
   }).filter(p => {
@@ -228,15 +245,15 @@ async function main() {
       redStats.wins += Number(p.wins),
       redStats.losses += Number(p.losses)
   })
- // 8 / 2 == 80% win rate
- // total games = wins + losses 
- // win pct = games won / total games
+  // 8 / 2 == 80% win rate
+  // total games = wins + losses 
+  // win pct = games won / total games
   //80% win rate
   redStats.totalRounds = Number(redStats.wins + redStats.losses)
   redStats.winPct = Number(((redStats.wins / redStats.totalRounds) * 100).toFixed(2))
   redStats.wl = Number(((redStats.wins / redStats.losses) * 100).toFixed(2))
-  redStats.kd = Number((redStats.kills / redStats.deaths).toFixed(2))
-  redStats.historickdpct = Number((redStats.historickd / Object.values(redStats).length).toFixed(2))
+  redStats.kd = Number(((redStats.kills / redStats.deaths) * 100).toFixed(2))
+  redStats.historickdpct = Number(((redStats.historickd / Object.values(redStats).length) * 100).toFixed(2))
 
   blues.map(p => {
     blueStats.kills += Number(p.kills),
@@ -248,8 +265,8 @@ async function main() {
   blueStats.totalRounds = Number(blueStats.wins + blueStats.losses)
   blueStats.winPct = Number(((blueStats.wins / blueStats.totalRounds) * 100).toFixed(2))
   blueStats.wl = Number(((blueStats.wins / blueStats.losses) * 100).toFixed(2))
-  blueStats.kd = Number((blueStats.kills / blueStats.deaths).toFixed(2))
-  blueStats.historickdpct = Number((blueStats.historickd / Object.values(blueStats).length).toFixed(2))
+  blueStats.kd = Number(((blueStats.kills / blueStats.deaths) * 100).toFixed(2))
+  blueStats.historickdpct = Number(((blueStats.historickd / Object.values(blueStats).length) * 100).toFixed(2))
 
 
 
@@ -262,7 +279,7 @@ async function main() {
       text: 'Team Summary'
     },
     xAxis: [{
-      categories: ['Current KPD', 'Historic KPD', 'Historic Win %'],
+      categories: ['Current KD x 100', 'Historic KD x 100', 'Historic Win %'],
       crosshair: true
     }],
     yAxis: [{ // Primary yAxis
@@ -289,9 +306,9 @@ async function main() {
     },
     plotOptions: {
       column: {
-        //grouping: true,
+        grouping: true,
         //  shadow: false,
-        //  borderWidth: 0
+        borderWidth: 0
       }
     },
     series: [{
@@ -303,117 +320,164 @@ async function main() {
       tooltip: {
         valueSuffix: ' '
       }
-    },{
-        name: 'BLU',
-        type: 'column',
-        color: '#2196f3',
-        yAxis: 0,
-        data: [blueStats.kd, blueStats.historickdpct, blueStats.winPct],
-        tooltip: {
-          valueSuffix: ' '
-        }
+    }, {
+      name: 'BLU',
+      type: 'column',
+      color: '#2196f3',
+      yAxis: 0,
+      data: [blueStats.kd, blueStats.historickdpct, blueStats.winPct],
+      tooltip: {
+        valueSuffix: ' '
       }
-    ]
+    }]
   })
 
-  
-Highcharts.chart('redperplayer', {
-  chart: {
+
+  Highcharts.chart('redperplayer', {
+    chart: {
       type: 'column'
-  },
-  title: {
+    },
+    title: {
       text: 'RED Players'
-  },
-  xAxis: {
-      categories: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.name}),
+    },
+    xAxis: {
+      categories: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Red"
+      }).map(p => {
+        return p.name
+      }),
       crosshair: true
-  },
-  yAxis: {
+    },
+    yAxis: {
       min: 0,
       minorTicks: false,
       title: {
-          text: ''
+        text: ''
       }
-  },
-  tooltip: {
+    },
+    tooltip: {
       headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
       pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
-          '<td style="padding:0"><b>{point.y}</b></td></tr>',
+        '<td style="padding:0"><b>{point.y}</b></td></tr>',
       footerFormat: '</table>',
       shared: true,
       useHTML: true,
       valueDecimals: 3
-  },
-  plotOptions: {
+    },
+    plotOptions: {
       column: {
-          pointPadding: 0.05,
-          borderWidth: 0
+        pointPadding: 0.05,
+        borderWidth: 0
       }
-  },
-  series: [{
+    },
+    series: [{
       name: 'Kills per Death',
       color: 'rgba(244, 67, 54, 1)',
-      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.kd})
-  }, {
+      data: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Red"
+      }).map(p => {
+        return p.kd
+      })
+    }, {
       name: 'Historic KPD',
       color: 'rgba(240, 98, 146, 1)',
-      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.historickd})
+      data: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Red"
+      }).map(p => {
+        return p.historickd
+      })
 
-  }, {
+    }, {
       name: 'Wins per Loss',
       color: 'rgba(142, 36, 170, 1)',
-      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Red"}).map(p => {return p.wl})
-  }]
-})
+      data: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Red"
+      }).map(p => {
+        return p.wl
+      })
+    }]
+  })
 
-Highcharts.chart('bluperplayer', {
-  chart: {
+  Highcharts.chart('bluperplayer', {
+    chart: {
       type: 'column'
-  },
-  title: {
+    },
+    title: {
       text: 'BLU Players'
-  },
-  xAxis: {
-      categories: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.name}),
+    },
+    xAxis: {
+      categories: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Blue"
+      }).map(p => {
+        return p.name
+      }),
       crosshair: true
-  },
-  yAxis: {
+    },
+    yAxis: {
       min: 0,
       minorTicks: false,
       title: {
-          text: ''
+        text: ''
       }
-  },
-  tooltip: {
+    },
+    tooltip: {
       headerFormat: '<span style="font-size:10px">{point.key}</span><table>',
       pointFormat: '<tr><td style="color:{series.color};padding:0">{series.name}: </td>' +
-          '<td style="padding:0"><b>{point.y}</b></td></tr>',
+        '<td style="padding:0"><b>{point.y}</b></td></tr>',
       footerFormat: '</table>',
       shared: true,
       useHTML: true,
       valueDecimals: 3
-  },
-  plotOptions: {
+    },
+    plotOptions: {
       column: {
-          pointPadding: 0.05,
-          borderWidth: 0
+        pointPadding: 0.05,
+        borderWidth: 0
       }
-  },
-  series: [{
+    },
+    series: [{
       name: 'Kills per Death',
       color: '#03a9f4',
-      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.kd})
-  }, {
+      data: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Blue"
+      }).map(p => {
+        return p.kd
+      })
+    }, {
       name: 'Historic KPD',
       color: '#00bcd4',
-      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.historickd})
+      data: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Blue"
+      }).map(p => {
+        return p.historickd
+      })
 
-  }, {
+    }, {
       name: 'Wins per Loss',
       color: '#009688',
-      data: window.players.filter(p => {return p.historickd > 0}).filter(p => {return p.team === "Blue"}).map(p => {return p.wl})
-  }]
-})
+      data: window.players.filter(p => {
+        return p.historickd > 0
+      }).filter(p => {
+        return p.team === "Blue"
+      }).map(p => {
+        return p.wl
+      })
+    }]
+  })
 
 
 
@@ -429,7 +493,7 @@ $(window).on('hashchange', function () {
   main()
 })
 
-$( document ).ready(function() {
+$(document).ready(function () {
   main()
 })
 
