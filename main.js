@@ -136,6 +136,8 @@ async function main() {
   const server = await getServerAddress()
 
   const serverDoc = await getXML(`${apiBase}http://api.gameme.net/serverinfo/${server}/players`)
+  $('title').text(`gameME Stats for ${serverDoc.getElementsByTagName("name")[0].firstChild.data}`)
+
   window.clientAPIBaseURL = serverDoc.getElementsByTagName("url")[0].firstChild.data
   //playersDoc = serverDoc.documentElement.childNodes[1].childNodes["0"].childNodes[15]
   const mapName = serverDoc.getElementsByTagName("map")[0].firstChild.data
