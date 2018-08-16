@@ -1,9 +1,10 @@
 //window.apiBase = 'http://127.0.0.1:8080/'
 window.apiBase = 'https://cors-anywhere.herokuapp.com/'
 
-function getXML(url) {
+function getXML(url, maxAge) {
   return new Promise(function (resolve, reject) {
     var xhr = new XMLHttpRequest();
+    xhr.setRequestHeader('Cache-Control', `s-maxage=${maxAge}`)
     xhr.open("GET", url);
     xhr.onload = function () {
       if (this.status >= 200 && this.status < 300) {
@@ -81,7 +82,7 @@ async function _parsePlayer(playerDoc, inputPlayer) {
 
 async function _getPlayerFromAPI(clientAPIBaseURL, player) {
   try {
-    var playerDoc = await getXML(`${apiBase}${clientAPIBaseURL}/api/playerinfo/tf/${player.id}`) // encodeURIComponent ?
+    var playerDoc = await getXML(`${apiBase}${clientAPIBaseURL}/api/playerinfo/tf/${player.id}`, 604800) // accept cached data up to 7 days old since this changes rarely
     if (playerDoc.getElementsByTagName('error').length > 0) {
       return false
     } // API errors with HTTP 200 :\
@@ -137,7 +138,7 @@ async function main() {
   console.log('main()')
   const server = await getServerAddress()
 
-  const serverDoc = await getXML(`${apiBase}http://api.gameme.net/serverinfo/${server}/players`)
+  const serverDoc = await getXML(`${apiBase}http://api.gameme.net/serverinfo/${server}/players`, 0)
   $('title').text(`gameME Stats for ${serverDoc.getElementsByTagName("name")[0].firstChild.data}`)
 
   window.clientAPIBaseURL = serverDoc.getElementsByTagName("url")[0].firstChild.data
