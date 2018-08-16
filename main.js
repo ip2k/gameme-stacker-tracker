@@ -4,8 +4,8 @@ window.apiBase = 'https://cors-anywhere.herokuapp.com/'
 function getXML(url, maxAge) {
   return new Promise(function (resolve, reject) {
     var xhr = new XMLHttpRequest();
-    xhr.setRequestHeader('Cache-Control', `s-maxage=${maxAge}`)
     xhr.open("GET", url);
+    xhr.setRequestHeader('Cache-Control', `s-maxage=${maxAge}`)
     xhr.onload = function () {
       if (this.status >= 200 && this.status < 300) {
         resolve(xhr.responseXML);
