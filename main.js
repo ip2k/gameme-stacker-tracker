@@ -128,9 +128,11 @@ async function main() {
   //  const done = await contentLoaded
   if (window.location.hash.replace('#', '') === '') { // empty hash shows or no hash shows how to use this
     $('#error').show()
+    mixpanel.track("Main page loaded");
     return
   } else {
     $('#error').hide()
+    mixpanel.track("Specific server loaded");
   }
   console.log('main()')
   const server = await getServerAddress()
@@ -141,6 +143,7 @@ async function main() {
   window.clientAPIBaseURL = serverDoc.getElementsByTagName("url")[0].firstChild.data
   //playersDoc = serverDoc.documentElement.childNodes[1].childNodes["0"].childNodes[15]
   const mapName = serverDoc.getElementsByTagName("map")[0].firstChild.data
+  $('#map').text(mapName)
   const playersRaw = serverDoc.getElementsByTagName("player")
   window.players = []
   window.playersToGet = [] // set up arr for promises that we need to resolve in parallel
